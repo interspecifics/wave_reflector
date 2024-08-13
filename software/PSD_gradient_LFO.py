@@ -28,8 +28,8 @@ band_titles = {
 
 positions = np.array([electrode_positions[ch] for ch in channels])
 resolution = 16
-n_steps = 5*25  # Number of steps for each component transition
-frames_per_second = 25  # Frames per second for interpolation
+n_steps = 10*15  # Number of steps for each component transition
+frames_per_second = 10  # Frames per second for interpolation
 
 def read_psd_vector(file_path):
     try:
@@ -96,11 +96,11 @@ def visualize_heatmap(zi, screen, width, height, band_title):
 
     pygame.display.flip()
 
-async def send_row_to_udp(ip, port, row):
+def send_row_to_udp(ip, port, row):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.sendto(row.tobytes(), (ip, port))
-            print(f"Sent row to {ip}:{port}")
+            # print(f"Sent row to {ip}:{port}")
     except Exception as e:
         print(f"Error sending row to {ip}:{port}: {e}")
 
@@ -122,14 +122,15 @@ async def check_file_updates(file_path, component_queue, zero_vector):
             print(f"Error checking file updates: {e}")
             await asyncio.sleep(1)
 
-async def main(file_path, interval, ip, port, band_title):
+async def main_async(file_path, interval, ip, port, band_title):
     component_queue = deque()
-    zero_vector = None
+    zero_vector = np.zeros(14)
     step = 0
     initial_run_completed = False  # Flag to check if the initial run is completed
+    initial_interpolation_steps = 100  # Number of steps for initial interpolation
 
     pygame.init()
-    width, height = 600, 600
+    width, height = 500, 500
     screen = pygame.display.set_mode((width, height))  # No frame for no icon
     pygame.display.set_caption('Band PSD Interpolation Heatmap')
 
@@ -139,16 +140,22 @@ async def main(file_path, interval, ip, port, band_title):
     while True:
         try:
             if len(component_queue) > 1 or not initial_run_completed:
-                alpha = step / n_steps
-                current_component = component_queue[0]
-                next_component = component_queue[1] if len(component_queue) > 1 else zero_vector
+                if step < initial_interpolation_steps:
+                    alpha = step / initial_interpolation_steps
+                    current_component = zero_vector
+                    next_component = component_queue[0]
+                else:
+                    alpha = (step - initial_interpolation_steps) / n_steps
+                    current_component = component_queue[0]
+                    next_component = component_queue[1] if len(component_queue) > 1 else zero_vector
+
                 interpolated_data = interpolate_components(current_component, next_component, alpha)
                 zi = plot_topomap(interpolated_data)
-                print(f"Interpolated grid at step {step}")
                 visualize_heatmap(zi, screen, width, height, band_title)
                 step += 1
-                if step >= n_steps:
-                    step = 0
+
+                if step >= initial_interpolation_steps + n_steps:
+                    step = initial_interpolation_steps
                     if len(component_queue) > 1:
                         component_queue.popleft()
                     initial_run_completed = True  # Set the flag to True after the initial run
@@ -158,7 +165,6 @@ async def main(file_path, interval, ip, port, band_title):
                     current_component = component_queue[0]
                     interpolated_data = interpolate_components(current_component, zero_vector, alpha)
                     zi = plot_topomap(interpolated_data)
-                    print(f"Interpolated grid at step {step}")
                     visualize_heatmap(zi, screen, width, height, band_title)
                     step += 1
                     if step >= n_steps:
@@ -175,7 +181,7 @@ async def main(file_path, interval, ip, port, band_title):
                 row_to_send = zi_norm[6]  # Send the 6th row
                 row_to_send = row_to_send[~np.isnan(row_to_send)][:8]  # Filter out NaNs
                 row_to_send = (row_to_send * 255).astype(np.uint8)  # Multiply array values by 255 and cast to int
-                asyncio.create_task(send_row_to_udp(ip, port, np.array(row_to_send)))
+                send_row_to_udp(ip, port, np.array(row_to_send))
 
             # Handle pygame events
             for event in pygame.event.get():
@@ -196,11 +202,11 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Continuously read and print the Band PSD from a file.')
     parser.add_argument('--band', type=str, default='alpha', help='Path to the Band PSD file')
-    parser.add_argument('--interval', type=int, default=5, help='Interval in seconds to check for file updates')
+    parser.add_argument('--interval', type=int, default=12, help='Interval in seconds to check for file updates')
     parser.add_argument('--ip', type=str, default='192.168.0.100', help='IP address to send the data')
     parser.add_argument('--port', type=int, default=5005, help='Port to send the data')
     args = parser.parse_args()
 
     file_path = f'C:\\Users\\alfredo\\Desktop\\wave-reflector\\CyKit\\Examples\\{args.band}_psd.txt'
     band_title = band_titles.get(args.band, 'Unknown Band')
-    asyncio.run(main(file_path, args.interval, args.ip, args.port, band_title))
+    asyncio.run(main_async(file_path, args.interval, args.ip, args.port, band_title))

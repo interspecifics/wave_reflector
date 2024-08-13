@@ -2,7 +2,8 @@ import subprocess
 import sys
 
 # Define the bands and their corresponding titles
-bands = ['delta', 'theta', 'alpha', 'beta', 'gamma']
+# bands = ['delta', 'theta', 'alpha', 'beta', 'gamma']
+bands = ['theta', 'alpha', 'beta', 'gamma']
 
 # Define the common parameters
 interval = 5
@@ -17,7 +18,7 @@ for band in bands:
     subprocess.Popen([
         python_executable, 'PSD_gradient_LFO.py',
         '--band', band,
-        '--interval', str(interval),
+        # '--interval', str(interval),
         '--ip', ip,
         '--port', str(port)
     ])

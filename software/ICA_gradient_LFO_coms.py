@@ -12,8 +12,8 @@ import socket
 channels = ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4']
 electrode_positions = {
     'Fp1': (-0.5, 1), 'Fp2': (0.5, 1), 'F7': (-1, 0.5), 'F3': (-0.5, 0.5), 'Fz': (0, 0.5), 'F4': (0.5, 0.5), 'F8': (1, 0.5),
-    'AF3': (-0.25, 0.75), 'AF4': (0.25, 0.75), 'FC5': (-0.75, 0.25), 'T7': (-1, 0), 'P7': (-1, -0.5), 'O1': (-0.5, -1),
-    'O2': (0.5, -1), 'P8': (1, -0.5), 'T8': (1, 0), 'FC6': (0.75, 0.25)
+    'AF3': (-0.25, 0.75), 'AF4': (0.25, 0.75), 'FC5': (-0.75, 0.25), 'T7': (-1, 0), 'P7': (-0.9, -0.7), 'O1': (-0.5, -1),
+    'O2': (0.5, -1), 'P8': (0.9, -0.7), 'T8': (1, 0), 'FC6': (0.75, 0.25)
 }
 electrode_positions = {key: value for key, value in electrode_positions.items() if key in channels}
 
@@ -37,7 +37,7 @@ def interpolate_components(current, next, alpha):
 
 def plot_topomap(data):
     xi = np.linspace(-1.5, 1.5, resolution)
-    yi = np.linspace(-1.5, 1.5, resolution)
+    yi = np.linspace(-1.5, 1.5, resolution - 1)
     zi = griddata((positions[:, 0], positions[:, 1]), data, (xi[None, :], yi[:, None]), method='cubic')
     return zi
 
@@ -83,7 +83,7 @@ async def send_row_to_udp(ip, port, row):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.sendto(row.tobytes(), (ip, port))
-            print(f"Sent row to {ip}:{port}")
+            # print(f"Sent row to {ip}:{port}")
     except Exception as e:
         print(f"Error sending row to {ip}:{port}: {e}")
 
@@ -119,8 +119,10 @@ async def main(file_path, interval, ip, port):
                 interpolated_data = interpolate_components(current_component, next_component, alpha)
                 zi = plot_topomap(interpolated_data)
                 # print(f"Interpolated grid at step {step}:\n{zi}")
-                print(f"Interpolated grid at step {step}")
+                # print(f"Interpolated grid at step {step}")
                 visualize_heatmap(zi, screen, width, height)
+                # non_nan_count = np.count_nonzero(~np.isnan(zi))
+                # print(f"Number of non-NaN values in zi: {non_nan_count}")
                 step += 1
                 if step >= n_steps:
                     step = 0
