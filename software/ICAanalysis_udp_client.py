@@ -28,7 +28,8 @@ def calculate_ica(X, line_count):
     print(A_)
 
     # Save the mixing matrix to a file
-    np.savetxt('C:\\Users\\alfredo\\Desktop\\wave-reflector\\CyKit\\Examples\\ica_mixing_matrix.txt', A_, delimiter=',')
+    #np.savetxt('C:\\Users\\alfredo\\Desktop\\wave-reflector\\CyKit\\Examples\\ica_mixing_matrix.txt', A_, delimiter=',')
+    np.savetxt('ica_mixing_matrix.txt', A_, delimiter=',')
     print(f"ICA Mixing Matrix saved to ica_mixing_matrix.txt")
 
 def main(host, port, buffer_size_seconds, sample_rate, overlap_fraction):

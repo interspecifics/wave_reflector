@@ -162,19 +162,21 @@ async def main(file_path, interval, ip, port):
 
             # Wait for the specified interval before checking again
             await asyncio.sleep(1. / 10)
+            #await asyncio.sleep(interval / n_steps)
         except KeyboardInterrupt:
             print("Interrupted by user")
             break
         except Exception as e:
             print(f"Error: {e}")
             await asyncio.sleep(1. / 10)
+            #await asyncio.sleep(interval / n_steps)
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Continuously read and print the ICA mixing matrix from a file.')
-    parser.add_argument('--file_path', type=str, default='C:\\Users\\alfredo\\Desktop\\wave-reflector\\CyKit\\Examples\\ica_mixing_matrix.txt', help='Path to the ICA mixing matrix file')
+    parser.add_argument('--file_path', type=str, default='ica_mixing_matrix.txt', help='Path to the ICA mixing matrix file')
     parser.add_argument('--interval', type=int, default=5, help='Interval in seconds to check for file updates')
-    parser.add_argument('--ip', type=str, default='192.168.0.100', help='IP address to send the data')
+    parser.add_argument('--ip', type=str, default='192.168.1.84', help='IP address to send the data')
     # parser.add_argument('--ip', type=str, default='localhost', help='IP address to send the data')
     parser.add_argument('--port', type=int, default=5005, help='Port to send the data')
     args = parser.parse_args()
