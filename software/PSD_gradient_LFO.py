@@ -29,7 +29,7 @@ band_titles = {
 positions = np.array([electrode_positions[ch] for ch in channels])
 resolution = 16
 n_steps = 10*15  # Number of steps for each component transition
-frames_per_second = 10  # Frames per second for interpolation
+frames_per_second = 15  # Frames per second for interpolation
 
 def read_psd_vector(file_path):
     try:
@@ -122,9 +122,7 @@ async def check_file_updates(file_path, component_queue, zero_vector):
             print(f"Error checking file updates: {e}")
             await asyncio.sleep(1)
 
-async def main_async(file_path, interval, ip, port, band_title):
-    component_queue = deque()
-    zero_vector = np.zeros(14)
+async def visualize(file_path, interval, ip, port, band_title, component_queue, zero_vector):
     step = 0
     initial_run_completed = False  # Flag to check if the initial run is completed
     initial_interpolation_steps = 100  # Number of steps for initial interpolation
@@ -133,9 +131,6 @@ async def main_async(file_path, interval, ip, port, band_title):
     width, height = 500, 500
     screen = pygame.display.set_mode((width, height))  # No frame for no icon
     pygame.display.set_caption('Band PSD Interpolation Heatmap')
-
-    # Start the file update checker
-    asyncio.create_task(check_file_updates(file_path, component_queue, zero_vector))
 
     while True:
         try:
@@ -197,6 +192,16 @@ async def main_async(file_path, interval, ip, port, band_title):
         except Exception as e:
             print(f"Error: {e}")
             await asyncio.sleep(1 / frames_per_second)
+
+async def main_async(file_path, interval, ip, port, band_title):
+    component_queue = deque()
+    zero_vector = np.zeros(14)
+
+    # Start the file update checker
+    asyncio.create_task(check_file_updates(file_path, component_queue, zero_vector))
+
+    # Start the visualization
+    await visualize(file_path, interval, ip, port, band_title, component_queue, zero_vector)
 
 if __name__ == "__main__":
     import argparse

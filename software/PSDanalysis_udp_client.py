@@ -74,42 +74,43 @@ def main(host, port, buffer_size_seconds, sample_rate, overlap_fraction):
         buffer = ""
 
         # Thread pool for PSD calculations
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            while True:
-                data, _ = client_socket.recvfrom(1024)
-                if not data:
-                    break
+        # with ThreadPoolExecutor(max_workers=4) as executor:
+        while True:
+            data, _ = client_socket.recvfrom(1024)
+            if not data:
+                break
 
-                # Append received data to buffer
-                buffer += data.decode()
+            # Append received data to buffer
+            buffer += data.decode()
 
-                # Process complete lines
-                while '\n' in buffer:
-                    line, buffer = buffer.split('\n', 1)
-                    try:
-                        values = list(map(float, line.split(',')))
-                    except ValueError:
-                        print(f"Skipping non-numeric line: {line}")
-                        continue
+            # Process complete lines
+            while '\n' in buffer:
+                line, buffer = buffer.split('\n', 1)
+                try:
+                    values = list(map(float, line.split(',')))
+                except ValueError:
+                    print(f"Skipping non-numeric line: {line}")
+                    continue
 
-                    # Update buffers
-                    for i, channel in enumerate(channels):
-                        buffers[channel].append(values[i])
+                # Update buffers
+                for i, channel in enumerate(channels):
+                    buffers[channel].append(values[i])
 
-                    line_count += 1
+                line_count += 1
 
-                    # Calculate and print PSD when buffer is filled
-                    if line_count >= buffer_size + overlap_size:
-                        # Create a matrix from the buffers
-                        X = np.array([list(buffers[channel]) for channel in channels])
+                # Calculate and print PSD when buffer is filled
+                if line_count >= buffer_size + overlap_size:
+                    # Create a matrix from the buffers
+                    X = np.array([list(buffers[channel]) for channel in channels])
 
-                        # Compute PSD in a separate thread
-                        executor.submit(calculate_psd, X, sample_rate)
+                    # Compute PSD in a separate thread
+                    # executor.submit(calculate_psd, X, sample_rate)
+                    calculate_psd(X, sample_rate)
 
-                        # Reset buffers for the next window with overlap
-                        for channel in channels:
-                            buffers[channel] = deque(list(buffers[channel])[-overlap_size:], maxlen=buffer_size)
-                        line_count = overlap_size
+                    # Reset buffers for the next window with overlap
+                    for channel in channels:
+                        buffers[channel] = deque(list(buffers[channel])[-overlap_size:], maxlen=buffer_size)
+                    line_count = overlap_size
 
     except socket.error as e:
         print(f"Connection error: {e}")
@@ -122,9 +123,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='UDP client to read and print data in real-time.')
     parser.add_argument('--host', type=str, default='localhost', help='Host IP address to connect to')
     parser.add_argument('--port', type=int, default=9002, help='UDP port number to connect to')
-    parser.add_argument('--buffer_size_seconds', type=int, default=5, help='Buffer size for each channel')
+    parser.add_argument('--buffer_size_seconds', type=int, default=4, help='Buffer size for each channel')
     parser.add_argument('--sample_rate', type=int, default=128, help='Sample rate in Hz (default: 128 Hz)')
-    parser.add_argument('--overlap_fraction', type=float, default=0.1, help='Fraction of buffer to overlap (default: 0.5)')
+    parser.add_argument('--overlap_fraction', type=float, default=0.25, help='Fraction of buffer to overlap (default: 0.5)')
     args = parser.parse_args()
 
     signal.signal(signal.SIGINT, signal_handler)

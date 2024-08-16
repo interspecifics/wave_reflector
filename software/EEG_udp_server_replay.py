@@ -8,7 +8,7 @@ def setup_udp_stream():
 
 def stream_file_over_udp(file_path, ports, sample_rate):
     server = setup_udp_stream()
-    delay = 1 / sample_rate / 2
+    delay = 1 / sample_rate
 
     try:
         with open(file_path, 'r') as file:
