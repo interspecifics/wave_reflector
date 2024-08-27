@@ -12,6 +12,7 @@ n_components = 5
 
 # Channel names and order
 channels = ["F3", "FC5", "AF3", "F7", "T7", "P7", "O1", "O2", "P8", "T8", "F8", "AF4", "FC6", "F4"]
+# channels = ['AF3', 'T7', 'PZ', 'T8', 'AF4']
 
 # Signal handler for graceful exit
 def signal_handler(sig, frame):

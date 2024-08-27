@@ -123,7 +123,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='UDP client to read and print data in real-time.')
     parser.add_argument('--host', type=str, default='localhost', help='Host IP address to connect to')
     parser.add_argument('--port', type=int, default=9002, help='UDP port number to connect to')
-    parser.add_argument('--buffer_size_seconds', type=int, default=4, help='Buffer size for each channel')
+    parser.add_argument('--buffer_size_seconds', type=int, default=5, help='Buffer size for each channel')
     parser.add_argument('--sample_rate', type=int, default=128, help='Sample rate in Hz (default: 128 Hz)')
     parser.add_argument('--overlap_fraction', type=float, default=0.25, help='Fraction of buffer to overlap (default: 0.5)')
     args = parser.parse_args()

@@ -15,6 +15,16 @@ electrode_positions = {
     'AF3': (-0.25, 0.75), 'AF4': (0.25, 0.75), 'FC5': (-0.75, 0.25), 'T7': (-1, 0), 'P7': (-1, -0.5), 'O1': (-0.5, -1),
     'O2': (0.5, -1), 'P8': (1, -0.5), 'T8': (1, 0), 'FC6': (0.75, 0.25)
 }
+
+# channels = ['AF3', 'T7', 'PZ', 'T8', 'AF4']
+
+# electrode_positions = {
+#     'Fp1': (-0.5, 1), 'Fp2': (0.5, 1), 'F7': (-1, 0.5), 'F3': (-0.5, 0.5), 'Fz': (0, 0.5), 'F4': (0.5, 0.5), 'F8': (1, 0.5),
+#     'AF3': (-0.25, 0.75), 'AF4': (0.25, 0.75), 'FC5': (-0.75, 0.25), 'T7': (-1, 0), 'P7': (-0.9, -0.7), 'O1': (-0.5, -1),
+#     'O2': (0.5, -1), 'P8': (0.9, -0.7), 'T8': (1, 0), 'FC6': (0.75, 0.25), 'PZ': (0, -0.5)
+# }
+
+
 electrode_positions = {key: value for key, value in electrode_positions.items() if key in channels}
 
 # Greek letters for the bands
@@ -29,7 +39,7 @@ band_titles = {
 positions = np.array([electrode_positions[ch] for ch in channels])
 resolution = 16
 n_steps = 10*15  # Number of steps for each component transition
-frames_per_second = 15  # Frames per second for interpolation
+frames_per_second = 12  # Frames per second for interpolation
 
 def read_psd_vector(file_path):
     try:
@@ -122,14 +132,15 @@ async def check_file_updates(file_path, component_queue, zero_vector):
             print(f"Error checking file updates: {e}")
             await asyncio.sleep(1)
 
-async def visualize(file_path, interval, ip, port, band_title, component_queue, zero_vector):
+async def visualize(file_path, interval, ip, port, band_title, component_queue, zero_vector, position):
     step = 0
     initial_run_completed = False  # Flag to check if the initial run is completed
     initial_interpolation_steps = 100  # Number of steps for initial interpolation
 
     pygame.init()
-    width, height = 500, 500
-    screen = pygame.display.set_mode((width, height))  # No frame for no icon
+    width, height = 350, 400
+    os.environ['SDL_VIDEO_WINDOW_POS'] = f"{position[0]},{position[1]}"  # Set window position
+    screen = pygame.display.set_mode((width, height), pygame.NOFRAME, display=1)  # No frame for no icon
     pygame.display.set_caption('Band PSD Interpolation Heatmap')
 
     while True:
@@ -163,9 +174,12 @@ async def visualize(file_path, interval, ip, port, band_title, component_queue, 
                     visualize_heatmap(zi, screen, width, height, band_title)
                     step += 1
                     if step >= n_steps:
-                        step = 0
-                        component_queue.popleft()
-                        component_queue.append(zero_vector)
+                        pygame.quit()
+                        return  
+
+                        # step = 0
+                        # component_queue.popleft()
+                        # component_queue.append(zero_vector)
 
             # Send one of the rows in zi to the UDP address
             if 'zi' in locals():
@@ -193,7 +207,7 @@ async def visualize(file_path, interval, ip, port, band_title, component_queue, 
             print(f"Error: {e}")
             await asyncio.sleep(1 / frames_per_second)
 
-async def main_async(file_path, interval, ip, port, band_title):
+async def main_async(file_path, interval, ip, port, band_title, position):
     component_queue = deque()
     zero_vector = np.zeros(14)
 
@@ -201,7 +215,7 @@ async def main_async(file_path, interval, ip, port, band_title):
     asyncio.create_task(check_file_updates(file_path, component_queue, zero_vector))
 
     # Start the visualization
-    await visualize(file_path, interval, ip, port, band_title, component_queue, zero_vector)
+    await visualize(file_path, interval, ip, port, band_title, component_queue, zero_vector, position)
 
 if __name__ == "__main__":
     import argparse
@@ -212,6 +226,17 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=5005, help='Port to send the data')
     args = parser.parse_args()
 
-    file_path = f'C:\\Users\\alfredo\\Desktop\\wave-reflector\\CyKit\\Examples\\{args.band}_psd.txt'
+    file_path = f'{args.band}_psd.txt'
     band_title = band_titles.get(args.band, 'Unknown Band')
-    asyncio.run(main_async(file_path, args.interval, args.ip, args.port, band_title))
+
+    # Define positions for each band
+    band_positions = {
+        # 'delta': (0 - 650, 0),
+        'theta': (0 - 625, 64 - 34),
+        'alpha': (250 - 575, 64 + 128 - 44),
+        'beta': (0 - 625, 448 - 34),
+        'gamma': (250 - 575, 448 + 128 - 44)
+    }
+    position = band_positions.get(args.band, (0, 0))
+
+    asyncio.run(main_async(file_path, args.interval, args.ip, args.port, band_title, position))
