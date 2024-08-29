@@ -10,7 +10,7 @@ def stream_file_over_udp(file_path, ports, sample_rate):
     import time  # Ensure time is imported
 
     server = setup_udp_stream()
-    delay = 1 / (sample_rate * 6 * 10 * 4)
+    delay = 1 / (sample_rate * 6 * 4)
     start_time = time.time()  # Start the timer
 
     # Write a 1 to STREAM_SIGNAL.txt to indicate the stream has started

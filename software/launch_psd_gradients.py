@@ -13,14 +13,20 @@ port = 5005
 # Path to the current Python interpreter
 python_executable = sys.executable
 
-# Launch PSD_gradient_LFO.py for each band
+# Launch PSD_gradient_LFO.py for each band and store the process handles
+processes = []
 for band in bands:
-    subprocess.Popen([
+    process = subprocess.Popen([
         python_executable, 'PSD_gradient_LFO.py',
         '--band', band,
         # '--interval', str(interval),
         '--ip', ip,
         '--port', str(port)
     ])
+    processes.append(process)
 
-print("Launched PSD_gradient_LFO.py for all bands.")
+# Wait for all subprocesses to complete
+for process in processes:
+    process.wait()
+
+print("All PSD_gradient_LFO.py processes have completed.")

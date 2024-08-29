@@ -12,8 +12,8 @@ import socket
 channels = ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4']
 electrode_positions = {
     'Fp1': (-0.5, 1), 'Fp2': (0.5, 1), 'F7': (-1, 0.5), 'F3': (-0.5, 0.5), 'Fz': (0, 0.5), 'F4': (0.5, 0.5), 'F8': (1, 0.5),
-    'AF3': (-0.25, 0.75), 'AF4': (0.25, 0.75), 'FC5': (-0.75, 0.25), 'T7': (-1, 0), 'P7': (-1, -0.5), 'O1': (-0.5, -1),
-    'O2': (0.5, -1), 'P8': (1, -0.5), 'T8': (1, 0), 'FC6': (0.75, 0.25)
+    'AF3': (-0.25, 0.75), 'AF4': (0.25, 0.75), 'FC5': (-0.75, 0.25), 'T7': (-1, 0), 'P7': (-0.9, -0.7), 'O1': (-0.5, -1),
+    'O2': (0.5, -1), 'P8': (0.9, -0.7), 'T8': (1, 0), 'FC6': (0.75, 0.25), 'PZ': (0, -0.5)
 }
 
 # channels = ['AF3', 'T7', 'PZ', 'T8', 'AF4']
@@ -145,6 +145,10 @@ async def visualize(file_path, interval, ip, port, band_title, component_queue, 
 
     while True:
         try:
+            if len(component_queue) == 0 and initial_run_completed:
+                pygame.quit()
+                return
+
             if len(component_queue) > 1 or not initial_run_completed:
                 if step < initial_interpolation_steps:
                     alpha = step / initial_interpolation_steps

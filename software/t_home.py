@@ -110,9 +110,9 @@ def main():
                             subprocess.Popen([sys.executable, "PSDanalysis_udp_client.py"])
                             time.sleep(10)
                             subprocess.Popen([sys.executable, "ICA_gradient_LFO_coms.py"])
-                            subprocess.Popen([sys.executable, "launch_psd_gradients.py"]).wait()
+                            subprocess.Popen([sys.executable, "launch_psd_gradients.py"])
 
-                            time.sleep(60 * 1)  # Wait for 15 minutes (900 seconds)
+                            time.sleep(60 * 50)  # Wait for 15 minutes (900 seconds)
                             main()
                 elif HEIGHT - BUTTON_HEIGHT - BUTTON_MARGIN - 80 <= y <= HEIGHT - BUTTON_MARGIN - 80:
                     if BUTTON_MARGIN <= x <= BUTTON_MARGIN + BUTTON_WIDTH:

@@ -7,9 +7,7 @@ import matplotlib.pyplot as plt
 from collections import deque
 import asyncio
 import socket
-
-from pythonosc import udp_client
-
+from pythonosc.udp_client import SimpleUDPClient
 
 # Standard 10-20 system positions for the specified channels
 channels = ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4']
@@ -27,9 +25,6 @@ speaker_zi_matrix_positions = [(4,7),(5,12),(8,12),(11,1),(11,5),(8,3),(5,3),(7,
 #     []
 #     []
 # ]
-
-
-
 
 positions = np.array([electrode_positions[ch] for ch in channels])
 resolution = 16
@@ -92,17 +87,9 @@ def visualize_heatmap(zi, screen, width, height):
 
     pygame.display.flip()
 
-async def send_row_to_udp(ip, port, row):
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.sendto(row.tobytes(), (ip, port))
-            # print(f"Sent row to {ip}:{port}")
-    except Exception as e:
-        print(f"Error sending row to {ip}:{port}: {e}")
-
 def send_array_to_osc(ip, port, array):
     try:
-        client = udp_client.SimpleUDPClient(ip, port)
+        client = SimpleUDPClient(ip, port)
         client.send_message("/array", array)
         # print(f"Sent array to {ip}:{port}")
     except Exception as e:
@@ -206,7 +193,6 @@ async def main(file_path, interval, ip, port):
                 row_to_send = row_to_send[~np.isnan(row_to_send)]  # Filter out NaNs
                 row_to_send = [int(x * 255) for x in row_to_send]  # Convert to a list of integers
 
-                # asyncio.create_task(send_row_to_udp(ip, port, np.array(row_to_send)))
                 if row_to_send:
                     send_array_to_osc(ip, port, row_to_send)
 
@@ -231,7 +217,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Continuously read and print the ICA mixing matrix from a file.')
     parser.add_argument('--file_path', type=str, default='ica_mixing_matrix.txt', help='Path to the ICA mixing matrix file')
     parser.add_argument('--interval', type=int, default=5, help='Interval in seconds to check for file updates')
-    parser.add_argument('--ip', type=str, default='192.168.68.114', help='IP address to send the data')
+    parser.add_argument('--ip', type=str, default='localhost', help='IP address to send the data')
     # parser.add_argument('--ip', type=str, default='localhost', help='IP address to send the data')
     parser.add_argument('--port', type=int, default=5005, help='Port to send the data')
     args = parser.parse_args()
