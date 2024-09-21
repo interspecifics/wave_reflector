@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from collections import deque
 import asyncio
 import socket
-from pythonosc.udp_client import SimpleUDPClient
+from oscpy.client import OSCClient
 
 # Standard 10-20 system positions for the specified channels
 channels = ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4']
@@ -89,8 +89,8 @@ def visualize_heatmap(zi, screen, width, height):
 
 def send_array_to_osc(ip, port, array):
     try:
-        client = SimpleUDPClient(ip, port)
-        client.send_message("/array", array)
+        client = OSCClient(ip, port)
+        client.send_message(b'/array', array)
         # print(f"Sent array to {ip}:{port}")
     except Exception as e:
         print(f"Error sending array to {ip}:{port}: {e}")
